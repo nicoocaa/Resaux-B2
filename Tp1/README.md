@@ -123,7 +123,8 @@ Itinéraires persistants :
 
 ☀️ **Hosts ?**
 
-```PS C:\Users\nicop> ping b2.hello.vous
+```
+PS C:\Users\nicop> ping b2.hello.vous
 
 Envoi d’une requête 'ping' sur b2.hello.vous [1.1.1.1] avec 32 octets de données :
 Réponse de 1.1.1.1 : octets=32 temps=19 ms TTL=55
@@ -135,8 +136,8 @@ Statistiques Ping pour 1.1.1.1:
     Paquets : envoyés = 4, reçus = 4, perdus = 0 (perte 0%),
 Durée approximative des boucles en millisecondes :
     Minimum = 18ms, Maximum = 20ms, Moyenne = 19ms
-PS C:\Users\nicop>```
-
+PS C:\Users\nicop>
+```
 ---
 
 ☀️ **Go mater une vidéo youtube et déterminer, pendant qu'elle tourne...**
@@ -154,7 +155,8 @@ Déterminer...
 
 - à quelle adresse IP correspond le nom de domaine `www.thinkerview.com`
 
-```PS C:\Users\nicop> nslookup www.thinkerview.com
+```
+PS C:\Users\nicop> nslookup www.thinkerview.com
 Serveur :   dns.google
 Address:  8.8.8.8
 
@@ -169,7 +171,8 @@ Addresses:  2a06:98c1:3121::7
 
 - à quel nom de domaine correspond l'IP `143.90.88.12`
 
-```PS C:\Users\nicop> nslookup 143.90.88.12
+```
+PS C:\Users\nicop> nslookup 143.90.88.12
 Serveur :   dns.google
 Address:  8.8.8.8
 
@@ -186,7 +189,8 @@ Déterminer...
 
 - par combien de machines vos paquets passent quand vous essayez de joindre `www.ynov.com` : 8
 
-```PS C:\Users\nicop> tracert www.ynov.com
+```
+PS C:\Users\nicop> tracert www.ynov.com
 
 Détermination de l’itinéraire vers www.ynov.com [172.67.74.226]
 avec un maximum de 30 sauts :
@@ -200,7 +204,8 @@ avec un maximum de 30 sauts :
   7    26 ms    25 ms    17 ms  162.158.20.240
   8    19 ms    15 ms    17 ms  172.67.74.226
 
-Itinéraire déterminé.```
+Itinéraire déterminé.
+```
 
 ---
 
@@ -211,24 +216,12 @@ Déterminer...
 
 - l'adresse IP publique de la passerelle du réseau (le routeur d'YNOV donc si vous êtes dans les locaux d'YNOV quand vous faites le TP)
 
-```PS C:\Users\nicop> (Invoke-WebRequest ifconfig.me/ip).Content
-195.7.117.146```
-
-# III. Le requin
-
-Faites chauffer Wireshark. Pour chaque point, je veux que vous me livrez une capture Wireshark, format `.pcap` donc.
-
-Faites *clean* 🧹, vous êtes des grands now :
-
-- livrez moi des captures réseau avec uniquement ce que je demande et pas 40000 autres paquets autour
-  - vous pouvez sélectionner seulement certains paquets quand vous enregistrez la capture dans Wireshark
-- stockez les fichiers `.pcap` dans le dépôt git et côté rendu Markdown, vous me faites un lien vers le fichier, c'est cette syntaxe :
-
-```markdown
-[Lien vers capture ARP](./captures/arp.pcap)
+```
+PS C:\Users\nicop> (Invoke-WebRequest ifconfig.me/ip).Content
+195.7.117.146
 ```
 
----
+# III. Le requin
 
 ☀️ **Capture ARP**
 
@@ -246,4 +239,3 @@ Faites *clean* 🧹, vous êtes des grands now :
 
 - [ 📁 fichier `tcp.pcap`](./tcp.pcap)
 
----
