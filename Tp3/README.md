@@ -1,0 +1,2 @@
+On a fait ce tp en groupe je me suis chargé de faire la parti de récupération de la mac des rooter avec nmap
+[voir le repo de maxime pour le rendu finale](https://github.com/Slaaaayz/b2-network_2024-2025/blob/main/TP3/README.md)
