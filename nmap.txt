@@ -1,0 +1,9 @@
+# Nmap 7.93 scan initiated Fri Oct 25 09:13:14 2024 as: nmap -p13337 -sS --open -oN nmap.txt 10.33.64.0/20
+Nmap scan report for 10.33.66.78
+Host is up (0.046s latency).
+
+PORT      STATE SERVICE
+13337/tcp open  unknown
+MAC Address: E4:B3:18:48:36:68 (Intel Corporate)
+
+# Nmap done at Fri Oct 25 09:15:45 2024 -- 4096 IP addresses (537 hosts up) scanned in 151.10 seconds
