@@ -21,22 +21,67 @@ Chaque partie correspond à un chall root-me. Je compléterai un peu le sujet de
 
 > [**Lien vers l'épreuve root-me.**](https://www.root-me.org/fr/Challenges/Reseau/HTTP-DNS-Rebinding)
 
-- utilisez l'app web et comprendre à quoi elle sert
-- lire le code ligne par ligne et comprendre chaque ligne
-  - en particulier : comment/quand est récupérée la page qu'on demande
-- se renseigner sur la technique DNS rebinding
 
 🌞 **Write-up de l'épreuve**
 
+Je commance d'abord par me renseigner sur ce qu'est un dns rebiding
+
+Je trouve sur ce [site](https://www.akamai.com/glossary/what-is-dns-rebinding) une présentation de ce que c'est avec un shemat grace au quel je comprends le type d'ataque que c'est 
+
+C'est quoi un DNS rebinding ?
+
+Tout d'abord, c'est une méthode qui permet de contourner la SOP, qui est un protocole. Pour faire simple, un site (donc un serveur) ne peut pas interagir avec un autre site, sauf s'ils ont le même nom de domaine.  
+
+Pour comprendre l'attaque, il faut comprendre le principe de TTL.  
+Quand on va sur un site, on demande à un serveur DNS l'IP du serveur que l'on veut contacter. Il va traduire pour nous google.com par une IP.  
+On va donc pouvoir se connecter au nom de domaine Google grâce à cette IP. Cependant, notre réseau ne va pas retenir indéfiniment que cette IP correspond au nom de domaine de Google.  
+Il va donc redemander au serveur DNS l'IP du nom de domaine.  
+C'est donc ça, le TTL : c'est le temps pendant lequel notre réseau va retenir en cache l'IP du nom de domaine.  
+
+Pour faire l'attaque, on va créer un site qui va permettre d'attaquer, par exemple www.site_qui_attaque.jsp.  
+On va le lier à un serveur DNS que l'on contrôle.  
+Un client va aller sur notre site, et notre serveur DNS va lui donner son IP, mais avec un très faible TTL. Le client connaît alors l'IP de mon site, mais le serveur DNS connaît aussi l'IP du résaux du client.  
+Quand le client va recontacter le serveur DNS pour connaître l'IP du site, il va lui donner l'IP du résaux du client.  
+Donc, au lieu de télécharger le code du site sur le serveur du site, il va le télécharger en local sur son résaux.  
+Il suffit alors d'y mettre du code malveillant, et le client téléchargera ce code malveillant sur son résaux.  
+
+Maintenant on lis le code que rootme nous donne  
+
+On comprends donc que pour acceder a la page admin il faut avoir une sertaine ip (il faut étre en local sur le serveur)  
+On comprends aussi que le site va faire plusieur vérification notament s'il l'ip est dans un lan et si l'ip est publique
+
+On regarde ce que l'aplication web fait maintenant 
+
+On lui donne un url et on nous renvoie dans une frame le site web qui correspond a l'url  
+
+Le site est donc un potentiel client vers notre site malveillant pour le dns rebiding
+
+On met donc en place le dns rebiding 
+
+On demande au site de se connecter a notre site notre serveur dns réccupére l'ip du serveur du site
+Le site télécharge le code du site en local notre site et l'éxécute
+Notre site a pour but de renvoyer vers la page admin du site rootme
+le site va donc ouvrire le site avec son ip local on passera les teste et on sera sur la page admin 
+
+Pour réaliser le dns rebiding j'ai utiliser cette librérie github qui fonctionne trés bien (rbndr)[https://github.com/taviso/rbndr]
+
+une fois le dns rebiding on y rentre notre url souhaité dans l'input : c0a80164.7f000001.rbndr.us:54022/admin
+Qui est tout simplement mon ip traduit en exadécimale (c0a80164) . l'ip local du site traduit en exadécimale (7f00000).rbndr.us: le port (54022) /la page sur laquel je veux me rendre (admin)
+
+Maintenant il faut faire plusieur requette de l'iput jusqu'au moment où l'ont va passer tout les tests et renrtrer dans la page damin 
+
+
 🌞 **Proposer une version du code qui n'est pas vulnérable**
 
-- les fonctionnalités doivent être maintenues
-  - genre le site doit toujours marcher
-  - dans sa qualité actuelle
-    - on laisse donc le délire de `/admin` joignable qu'en `127.0.0.1`
-    - c'est un choix effectué ça, on le remet pas en question
-- mais l'app web ne doit plus être sensible à l'attaque
+on peut déjà filtrer de maniére plus préssise les ip :  
+en bloquand les adresse multicast qui sont des adresse ip non destiné au ussage web donc si une ip est multi cast cela montre une activité suspecte ip.is_multicast  
+en ploquant les adrsse reserve qui sont des adresses qui ne sont pas accésible ce qui montrerais également une activité suspecte ip.is_reserved  
+on peut également bloquer les adresse privé qui ne sont pas censé étre des adresse de site web  en y ajoutant ip.is_private   
 
+
+on pourrais aussi ajouter une vérification qui s'assure que l'ip du site que l'on essaye de joindre n'est pas une ip locale on ne pourait donc plus accéder a admin en local avec la frame mais on y accéderait toujours via l'url classique du site 
+
+on pourrait également ajouter un delay entre chauqe requette de l'app vers les urls demandé cela ralentirais la progréssion de l'ataquant 
 ## II. Netfilter erreurs courantes
 
 > [**Lien vers l'épreuve root-me.**](https://www.root-me.org/fr/Challenges/Reseau/Netfilter-erreurs-courantes)
@@ -48,6 +93,7 @@ Chaque partie correspond à un chall root-me. Je compléterai un peu le sujet de
 - on cherche donc à match une règle qui est en ACCEPT
 
 🌞 **Write-up de l'épreuve**
+
 
 🌞 **Proposer un jeu de règles firewall**
 
