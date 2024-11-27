@@ -202,99 +202,143 @@ nico@debian:~/wireguard$
 
 🌞 **Ecrire un script `client.sh`**
 
-- vous me le remettez dans le dépôt git de rendu
-- un client peut le lancer, pour automatiquement générer une conf fonctionnelle
-
-➜ **Fonctionnalités attendues du script**
-
-- **en début de script, vérifiez**
-  - que le script est bien run sous l'identité de `root`
-    - sinon affichez un message d'erreur en conséquence, et quitter
-  - que Wireguard est déjà installé
-    - sinon affichez un message d'erreur en conséquence, et quitter
-- **automatise la création d'une conf pour le client**
-  - produit la clé privée et la clé publique d'un nouveau client
-  - produit le fichier de conf du client
-  - affiche la section `[Peer]` à ajouter dans la conf serveur dans la sortie du terminal
-- **ajoute un alias `vpn` qui permet de se connecter au VPN**
-  - l'alias doit aussi persister à travers les reboots
-- **gère automatiquement la route par défaut du client**
-  - ajoute une route par défaut lorsque le client se co au VPN
-  - supprime la route par défaut quand le client se déco du VPN
-
+[client.sh](./client.sh)
 # II. SSH
 
 ## 1. Setup
 
-| Machine            | LAN `10.7.1.0/24` | VPN `10.7.2.0/24` |
-| ------------------ | ----------------- | ----------------- |
-| `vpn.tp7.secu`     | `10.7.1.100/24`   |                   |
-| `martine.tp7.secu` | `10.7.1.11/24`    | `10.7.2.11/24`    |
-| `bastion.tp7.secu` | `10.7.1.12/24`    | `10.7.2.12/24`    |
-| `web.tp7.secu`     | `10.7.1.13/24`    | `10.7.2.13/24`    |
-| ton PC             | X                 | `10.7.2.100/24`   |
-
 🌞 **Générez des confs Wireguard pour tout le monde**
 
-- tout le monde doit pouvoir se ping en utilisant les IPs du VPN
-- il serait ptet malin de faire un script non ? J'propose hein.
+voici le script qui génére la conf client pour le bastion :
 
-> *Notez que dans un cas réel, la clé privée et la clé publique de chaque client doivent être générés par les client eux-mêmes. Sinon ce serait comme choisir un password pour quelqu'un d'autre : il est compromis dès sa création ! Dans notre cas, le client génère sa clé privée et sa clé publique, et il file sa clé publique au serveur (seule info nécessaire pour la conf serveur).*
+```bash
+[nico@bastion ~]$ ./client.sh 
+Tout les prérequis sont présent la configuration va commencer
+Quelles est l'ip que vous voulez atribuer au client
+Format de l'ip 10.10.10.10/24 requis
+
+10.7.2.12/24---------------------------------------------------------------------------------------------
+Veuillez ajouter les lignes suivantes au fichier de configuration de votre serveur VPN (/etc/wireguard/wg0.conf) :
+
+
+[Peer]
+PublicKey = rs7YI0sFaFy1iRoxV1f/AP3FQ18gDPS2dt14GatFmiU=
+AllowedIPs = 
+---------------------------------------------------------------------------------------------
+ Aprés avoir édité le fichier de conf de votre vpn vous pouver lancer les commandes suivante 
+vpn-C  pour vous connecter au vpn 
+vpn-D pour vous déconecter du vpn 
+[nico@bastion ~]$ rm -rf wireguard/
+[nico@bastion ~]$ ./client.sh 
+Tout les prérequis sont présent la configuration va commencer
+Quelles est l'ip que vous voulez atribuer au client
+Format de l'ip 10.10.10.10/24 requis
+10.7.2.12/24
+---------------------------------------------------------------------------------------------
+Veuillez ajouter les lignes suivantes au fichier de configuration de votre serveur VPN (/etc/wireguard/wg0.conf) :
+
+
+[Peer]
+PublicKey = NfuerxwuveijY7LYb1zPAajoulyOhUYj2SbugPKqVWw=
+AllowedIPs = 10.7.2.12/24
+---------------------------------------------------------------------------------------------
+ Aprés avoir édité le fichier de conf de votre vpn vous pouver lancer les commandes suivante 
+vpn-C  pour vous connecter au vpn 
+vpn-D pour vous déconecter du vpn 
+[nico@bastion ~]$ 
+```
+c'est exactemetn la méme chose pour le web 
+
+on peut voir que je peux ping tout le monde depuis mon pc :
+
+```bash
+nico@debian:~/wireguard$ ping 10.7.2.11
+PING 10.7.2.0 (10.7.2.0) 56(84) bytes of data.
+64 bytes from 10.7.2.11: icmp_seq=1 ttl=64 time=1.13 ms
+64 bytes from 10.7.2.11: icmp_seq=2 ttl=64 time=1.35 ms
+64 bytes from 10.7.2.11: icmp_seq=3 ttl=64 time=1.42 ms
+64 bytes from 10.7.2.11: icmp_seq=4 ttl=64 time=1.24 ms
+^C
+--- 10.7.2.11 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3005ms
+rtt min/avg/max/mdev = 1.130/1.283/1.417/0.109 ms
+nico@debian:~/wireguard$ ^C
+nico@debian:~/wireguard$ ping 10.7.2.12
+64 bytes from 10.7.2.12: icmp_seq=1 ttl=62 time=3.54 ms
+64 bytes from 10.7.2.12: icmp_seq=2 ttl=62 time=4.90 ms
+^C
+--- 10.7.2.12 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time 1002ms
+rtt min/avg/max/mdev = 3.537/4.218/4.899/0.681 ms
+
+```
+
 
 ## 2. Bastion
 
-On va décider que la machine `bastion.tp7.secu` est notre bastion SSH : si on veut se connecter à n'importe quel serveur en SSH, on doit passer par lui.
-
-Par exemple, si on essaie de se connecter à `web.tp7.secu` en direct sur l'IP `10.7.2.13/24`, il dois nous jeter.
-
-En revanche, si on se connecte d'abord à `bastion.tp7.secu`, puis on se connecte à `web.tp7.secu`, alors là ça fonctionne.
-
-On peut faire ça en une seule commande SSH en utilisant la feature de jump SSH. Littéralement : on rebondit sur une machine avant d'arriver sur une autre. Comme ça :
-
-```bash
-# on remplace
-ssh bastion.tp7.secu
-# puis, une fois connecté :
-ssh web.tp7.secu
-
-# paaaar une seule commande directe :
-
-# avec les noms
-ssh -j bastion.tp7.secu web.tp7.secu
-# avec les IPs
-ssh -j 10.7.2.12 10.7.2.13
-```
 
 🌞 **Empêcher la connexion SSH directe sur `web.tp7.secu`**
 
-- on autorise la connexion SSH que si elle vient de `bastion.tp7.secu`
-- avec le firewall : on bloque le trafic à destination du port 22 s'il ne vient pas de `10.7.2.12`
-- prouvez que ça fonctionne
-  - que le trafic est bien bloqué en direct
-  - mais qu'on peut y accéder depuis `bastion.tp7.secu`
+```bash
+[nico@bastion ~]$ sudo firewall-cmd --permanent --add-rich-rule='rule family="ipv4" source address="10.7.2.12" port port="22" protocol="tcp" accept'
+[sudo] password for nico: 
+success
+[nico@bastion ~]$ sudo firewall-cmd --permanent --add-rich-rule='rule family="ipv4" port port="22" protocol="tcp" drop'
+success
+[nico@bastion ~]$ sudo firewall-cmd --reload
+success
+[nico@bastion ~]$ 
+
+```
 
 🌞 **Connectez-vous avec un jump SSH**
 
-- en une seule commande, vous avez un shell sur `web.tp7.secu`
-
-> Désormais, le bastion centralise toutes les connexions SSH. Il devient un noeud très important dans la gestion du parc, et permet à lui seul de tracer toutes les connexions SSH effectuées.
-
+```bash
+[nico@debian ~]$ ssh -J 10.7.2.13 10.7.2.114
+nico@10.7.2.13's password: 
+nico@10.7.2.114's password: 
+Last login: Wed Nov 27 11:10:12 2024 from 10.7.1.1
+[nico@web ~]$ 
+```
 ## 3. Connexion par clé
 
 🌞 **Générez une nouvelle paire de clés pour ce TP**
 
-- vous les utiliserez pour vous connecter aux machines
-- vous n'utiliserez **PAS** l'algorithme RSA
-- faites des recherches pour avoir l'avis de gens qualifiés sur l'algo à choisir en 2023 pour avoir la "meilleure" clé (sécurité et perfs)
+```bash
+nico@debian:~/wireguard$ ssh-keygen -t ed25519 -C "tp7-secu@nicolas" -f ~/.ssh/id_ed25519_tp7
+Generating public/private ed25519 key pair.
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /home/nico/.ssh/id_ed25519_tp7
+Your public key has been saved in /home/nico/.ssh/id_ed25519_tp7.pub
+The key fingerprint is:
+SHA256:69eh7N8rfGLrpSpPEVr8ePeU/NE0X47Nl3fMkfoxZes tp7-secu@nicolas
+The key's randomart image is:
++--[ED25519 256]--+
+|                 |
+|         .      .|
+|          +    +=|
+|         o +  oX@|
+|        S o o.oO&|
+|         . o..ooO|
+|        ...+ ..Eo|
+|       ...+ *+.  |
+|        .=+===o. |
++----[SHA256]-----+
+nico@debian:~/wireguard$ 
 
+```
 ## 4. Conf serveur SSH
 
 🌞 **Changez l'adresse IP d'écoute**
 
-- sur toutes les machines
-- vos serveurs SSH ne doivent être disponibles qu'au sein du réseau VPN
-- prouvez que vous ne pouvez plus accéder à une session SSH en utilisant l'IP host-only (obligé de passer par le VPN)
-
+```bash
+[nico@web ~]$ sudo cat /etc/ssh/sshd_config | grep Listen
+ListenAddress 10.7.2.1
+[nico@web ~]$ sudo systemctl restart sshd
+nico@debian:~$ ssh nico@10.7.1.13
+ssh: connect to host 10.7.1.13 port 22: Connection timed out
+```
 🌞 **Améliorer le niveau de sécurité du serveur**
 
 - sur toutes les machines
@@ -393,12 +437,6 @@ $ ls
 
 ### C. Bonnes pratiques RedHat
 
-Sur RedHat, il existe un emplacement réservé aux clés et certificats :
-
-- `/etc/pki/tls/certs/` pour les certificats
-  - pas choquant de voir du droit de lecture se balader
-- `/etc/pki/tls/private/` pour les clés
-  - ici, seul le propriétaire du fichier a le droit de lecture
 
 🌞 **Déplacer les clés et les certificats dans l'emplacement réservé**
 
